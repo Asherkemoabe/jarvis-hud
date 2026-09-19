@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Jarvis",
+    "slug": "jarvis-hud",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "android": {
+      "package": "com.asher.jarvis",
+      "permissions": [
+        "READ_CONTACTS",
+        "READ_CALENDAR",
+        "WRITE_CALENDAR",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "ACTIVITY_RECOGNITION"
+      ]
+    },
+    "plugins": [
+      "expo-calendar",
+      "expo-contacts",
+      "expo-image-picker",
+      "expo-document-picker",
+      "expo-location",
+      "expo-sensors",
+      "expo-notifications"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "REPLACE_AFTER_RUNNING_eas_build_configure"
+      }
+    }
+  }
+}
