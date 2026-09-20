@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { BG, PANEL2, LINE, TEXT, TEXT_DIM } from '../theme';
 
-export function ScreenWrap({ title, accent, onBack, children, scroll = true }) {
+export function ScreenWrap({ title, subtitle, accent, onBack, children, scroll = true }) {
   const Body = scroll ? ScrollView : View;
   return (
     <SafeAreaView style={s.root}>
@@ -14,7 +14,10 @@ export function ScreenWrap({ title, accent, onBack, children, scroll = true }) {
         ) : (
           <View style={s.backBtn} />
         )}
-        <Text style={[s.title, { color: accent }]}>{title}</Text>
+        <View style={{ alignItems: 'center' }}>
+          <Text style={[s.title, { color: accent }]}>{title}</Text>
+          {subtitle ? <Text style={[s.subtitle, { color: accent }]}>{subtitle}</Text> : null}
+        </View>
         <View style={s.backBtn} />
       </View>
       <Body style={{ flex: 1 }} contentContainerStyle={scroll ? { padding: 16, paddingBottom: 40 } : undefined}>
@@ -63,6 +66,7 @@ const s = StyleSheet.create({
   backBtn: { width: 70 },
   backText: { fontSize: 14 },
   title: { fontSize: 16, fontWeight: '700', letterSpacing: 1 },
+  subtitle: { fontSize: 10, letterSpacing: 1, marginTop: 2, opacity: 0.8 },
   card: { backgroundColor: PANEL2, borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: LINE },
   btn: { borderRadius: 12, paddingVertical: 12, alignItems: 'center', marginTop: 8 },
   btnText: { color: '#04070a', fontWeight: '700' },

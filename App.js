@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { THEMES } from './theme';
 
-import ChatScreen from './screens/ChatScreen';
-import SettingsScreen from './screens/SettingsScreen';
+import MainScreen from './screens/MainScreen';
+import CodeScreen from './screens/CodeScreen';
 import NotesScreen from './screens/NotesScreen';
 import ExpensesScreen from './screens/ExpensesScreen';
 import VaultScreen from './screens/VaultScreen';
@@ -55,7 +55,8 @@ const UNAVAILABLE = {
 };
 
 export default function App() {
-  const [screen, setScreen] = useState('chat');
+  const [screen, setScreen] = useState('main');
+  const [mainTab, setMainTab] = useState('chat');
   const [accent, setAccent] = useState(THEMES[0].color);
   const [apiKey, setApiKey] = useState('');
 
@@ -78,10 +79,22 @@ export default function App() {
     await AsyncStorage.setItem('accent_color', color);
   };
 
-  const backToChat = () => setScreen('chat');
-  const commonProps = { accent, onBack: backToChat };
+  const backToMain = () => setScreen('main');
+  const commonProps = { accent, onBack: backToMain };
 
-  if (screen === 'settings') return <SettingsScreen {...commonProps} apiKey={apiKey} onSaveKey={saveKey} onPickTheme={pickTheme} />;
+  // Jarvis in ChatScreen calls this to navigate. "settings" switches the
+  // tab inside MainScreen rather than pushing a separate screen, since
+  // Settings lives in the tab bar now, not as its own overlay.
+  const handleOpenScreen = (key) => {
+    if (key === 'settings') {
+      setMainTab('settings');
+      setScreen('main');
+      return;
+    }
+    setScreen(key);
+  };
+
+  if (screen === 'code') return <CodeScreen {...commonProps} apiKey={apiKey} onNeedKey={() => handleOpenScreen('settings')} />;
   if (screen === 'notes') return <NotesScreen {...commonProps} />;
   if (screen === 'expenses') return <ExpensesScreen {...commonProps} />;
   if (screen === 'vault') return <VaultScreen {...commonProps} />;
@@ -95,18 +108,22 @@ export default function App() {
   if (screen === 'weather') return <LocationWeatherScreen {...commonProps} />;
   if (screen === 'fitness') return <FitnessScreen {...commonProps} />;
   if (screen === 'reminders') return <RemindersScreen {...commonProps} />;
-  if (screen === 'translate') return <TranslateScreen {...commonProps} apiKey={apiKey} onNeedKey={() => setScreen('settings')} />;
-  if (screen === 'study') return <StudyScreen {...commonProps} apiKey={apiKey} onNeedKey={() => setScreen('settings')} />;
+  if (screen === 'translate') return <TranslateScreen {...commonProps} apiKey={apiKey} onNeedKey={() => handleOpenScreen('settings')} />;
+  if (screen === 'study') return <StudyScreen {...commonProps} apiKey={apiKey} onNeedKey={() => handleOpenScreen('settings')} />;
   if (screen === 'news') return <NewsScreen {...commonProps} />;
   if (screen === 'places') return <PlacesScreen {...commonProps} />;
   if (UNAVAILABLE[screen]) return <UnavailableScreen {...commonProps} {...UNAVAILABLE[screen]} />;
 
   return (
-    <ChatScreen
+    <MainScreen
+      tab={mainTab}
+      onTabChange={setMainTab}
       accent={accent}
       apiKey={apiKey}
-      onNeedKey={() => setScreen('settings')}
-      onOpenScreen={setScreen}
+      onSaveKey={saveKey}
+      onPickTheme={pickTheme}
+      onNeedKey={() => setMainTab('settings')}
+      onOpenScreen={handleOpenScreen}
     />
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import Reactor from '../components/Reactor';
+import Dock from '../components/Dock';
 import { ScreenWrap } from '../components/UI';
 import { PANEL2, TEXT, TEXT_DIM, LINE } from '../theme';
 
@@ -10,7 +11,7 @@ import { PANEL2, TEXT, TEXT_DIM, LINE } from '../theme';
 const SCREEN_KEYS = [
   'expenses', 'calendar', 'reminders', 'notes', 'weather', 'news', 'study',
   'translate', 'places', 'contacts', 'camera', 'files', 'fitness', 'device',
-  'vault', 'launcher', 'bridge', 'settings',
+  'vault', 'launcher', 'bridge', 'settings', 'code',
   'email', 'social', 'callscreen', 'smarthome', 'gaming',
 ];
 
@@ -23,7 +24,8 @@ notes (journaling), weather (weather/location), news (headlines), study (learn a
 translate (translate text), places (nearby businesses), contacts (look up a contact),
 camera (take/pick a photo), files (pick a file), fitness (step count), device (battery/network),
 vault (save/retrieve a password), launcher (open another app), bridge (send WhatsApp/SMS),
-settings (change HUD color or API key), email/social/callscreen/smarthome/gaming (not available yet
+settings (change HUD color or API key), code (paste code to check or ask you to review it),
+email/social/callscreen/smarthome/gaming (not available yet
 in this build - open these anyway so the user sees why).
 
 Reply with ONLY a JSON object, no markdown fences, no extra text:
@@ -44,7 +46,7 @@ function safeParse(raw) {
   return { reply: raw, screen: null };
 }
 
-export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen }) {
+export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, onOpenCode }) {
   const [messages, setMessages] = useState([{ id: 'boot', role: 'jarvis', text: 'All systems online. How can I help, sir?' }]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -87,7 +89,8 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen }) 
   };
 
   return (
-    <ScreenWrap title="J.A.R.V.I.S." accent={accent} scroll={false}>
+    <ScreenWrap title="J.A.R.V.I.S." subtitle="JARVIS SYSTEMS // ONLINE" accent={accent} scroll={false}>
+      <Dock accent={accent} onOpenCode={onOpenCode} />
       <View style={{ alignItems: 'center', justifyContent: 'center', height: 170 }}>
         <Reactor size={200} color={accent} />
       </View>
