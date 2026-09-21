@@ -70,7 +70,7 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, on
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
         body: JSON.stringify({
-          model: 'llama-3.1-8b-instant',
+          model: 'openai/gpt-oss-20b',
           messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...recent.map((m) => ({ role: m.role === 'jarvis' ? 'assistant' : 'user', content: m.text }))],
         }),
       });
