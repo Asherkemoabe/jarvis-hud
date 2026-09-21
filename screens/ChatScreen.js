@@ -92,7 +92,7 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, on
     <ScreenWrap title="J.A.R.V.I.S." subtitle="JARVIS SYSTEMS // ONLINE" accent={accent} scroll={false}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <Dock accent={accent} onOpenCode={onOpenCode} />
         <View style={{ flex: 1 }}>
