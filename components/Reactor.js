@@ -19,7 +19,7 @@ function pt(r, deg) {
 // Only the dashed ring (transform) and the glow (opacity) animate — every
 // other piece above is static geometry, painted once, so this stays cheap
 // on low-end Android regardless of how much detail it has.
-export default function Reactor({ size = 220, color = '#3ce8c9', coilCount = 9 }) {
+export default function Reactor({ size = 200, color = '#3ce8c9', coilCount = 9 }) {
   const spin = useRef(new Animated.Value(0)).current;
   const pulse = useRef(new Animated.Value(0)).current;
 
