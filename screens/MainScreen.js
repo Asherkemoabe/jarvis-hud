@@ -1,5 +1,5 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet } from 'react-native';
+import { SafeAreaView, StyleSheet, Platform, StatusBar } from 'react-native';
 import HudStatusBar from '../components/HudStatusBar';
 import TabBar from '../components/TabBar';
 import ChatScreen from './ChatScreen';
@@ -26,4 +26,6 @@ export default function MainScreen({ tab, onTabChange, accent, apiKey, onSaveKey
   );
 }
 
-const styles = StyleSheet.create({ root: { flex: 1, backgroundColor: BG } });
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: BG, paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 },
+});
