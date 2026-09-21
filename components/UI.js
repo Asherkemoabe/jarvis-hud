@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Platform, StatusBar } from 'react-native';
 import { BG, PANEL2, LINE, TEXT, TEXT_DIM } from '../theme';
 
 export function ScreenWrap({ title, subtitle, accent, onBack, children, scroll = true }) {
@@ -52,7 +52,7 @@ export function Label({ children }) {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: BG },
+  root: { flex: 1, backgroundColor: BG, paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
