@@ -11,14 +11,12 @@ export function ScreenWrap({ title, subtitle, accent, onBack, children, scroll =
           <TouchableOpacity onPress={onBack} hitSlop={10} style={s.backBtn}>
             <Text style={[s.backText, { color: accent }]}>{'‹'} Back</Text>
           </TouchableOpacity>
-        ) : (
-          <View style={s.backBtn} />
-        )}
-        <View style={{ alignItems: 'center' }}>
+        ) : null}
+        <View style={onBack ? { alignItems: 'center' } : { alignItems: 'flex-start', flex: 1 }}>
           <Text style={[s.title, { color: accent }]}>{title}</Text>
           {subtitle ? <Text style={[s.subtitle, { color: accent }]}>{subtitle}</Text> : null}
         </View>
-        <View style={s.backBtn} />
+        {onBack ? <View style={s.backBtn} /> : null}
       </View>
       <Body style={{ flex: 1 }} contentContainerStyle={scroll ? { padding: 16, paddingBottom: 40 } : undefined}>
         {children}
