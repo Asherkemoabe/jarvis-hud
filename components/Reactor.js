@@ -102,7 +102,7 @@ export default function Reactor({ size = 200, color = '#3ce8c9', coilCount = 9 }
     <View style={{ width: size, height: size }}>
       {/* static: rim, coils, circuit traces */}
       <Svg width={size} height={size} viewBox="0 0 200 200" style={StyleSheet.absoluteFill}>
-        <Circle cx="100" cy="100" r="96" stroke={color} strokeWidth="0.8" fill="none" opacity={0.4} />
+        <Circle cx="100" cy="100" r="94" stroke={color} strokeWidth="3.5" fill="none" opacity={0.45} />
         <G>{coils}</G>
         <G>{traces}</G>
       </Svg>
