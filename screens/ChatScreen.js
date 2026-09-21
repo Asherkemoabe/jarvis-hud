@@ -90,26 +90,29 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, on
 
   return (
     <ScreenWrap title="J.A.R.V.I.S." subtitle="JARVIS SYSTEMS // ONLINE" accent={accent} scroll={false}>
-      <Dock accent={accent} onOpenCode={onOpenCode} />
-      <View style={{ flex: 1 }}>
-        <View style={styles.reactorBg} pointerEvents="none">
-          <Reactor size={200} color={accent} />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <Dock accent={accent} onOpenCode={onOpenCode} />
+        <View style={{ flex: 1 }}>
+          <View style={styles.reactorBg} pointerEvents="none">
+            <Reactor size={320} color={accent} />
+          </View>
+          <FlatList
+            ref={listRef}
+            style={{ flex: 1, paddingHorizontal: 16 }}
+            data={messages}
+            keyExtractor={(m) => m.id}
+            onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+            ListHeaderComponent={<Text style={styles.bootLine}>BOOT SEQUENCE COMPLETE</Text>}
+            renderItem={({ item }) => (
+              <View style={[styles.bubble, item.role === 'user' ? styles.user : styles.jarvis]}>
+                <Text style={styles.bubbleText}>{item.text}</Text>
+              </View>
+            )}
+          />
         </View>
-        <FlatList
-          ref={listRef}
-          style={{ flex: 1, paddingHorizontal: 16 }}
-          data={messages}
-          keyExtractor={(m) => m.id}
-          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
-          ListHeaderComponent={<Text style={styles.bootLine}>BOOT SEQUENCE COMPLETE</Text>}
-          renderItem={({ item }) => (
-            <View style={[styles.bubble, item.role === 'user' ? styles.user : styles.jarvis]}>
-              <Text style={styles.bubbleText}>{item.text}</Text>
-            </View>
-          )}
-        />
-      </View>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.inputWrap}>
           <TouchableOpacity
             style={styles.attachBtn}
@@ -142,7 +145,7 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, on
 }
 
 const styles = StyleSheet.create({
-  reactorBg: { position: 'absolute', top: '50%', left: '50%', marginLeft: -100, marginTop: -100, opacity: 0.2, zIndex: 0 },
+  reactorBg: { position: 'absolute', top: '50%', left: '50%', marginLeft: -160, marginTop: -160, opacity: 0.18, zIndex: 0 },
   bootLine: { color: TEXT_DIM, fontSize: 10, letterSpacing: 2, fontWeight: '700', textAlign: 'center', marginTop: 4, marginBottom: 10 },
   bubble: { padding: 10, borderRadius: 14, marginVertical: 4, maxWidth: '80%' },
   bubbleText: { color: TEXT, fontSize: 15 },
