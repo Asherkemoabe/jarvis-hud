@@ -91,21 +91,23 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, on
   return (
     <ScreenWrap title="J.A.R.V.I.S." subtitle="JARVIS SYSTEMS // ONLINE" accent={accent} scroll={false}>
       <Dock accent={accent} onOpenCode={onOpenCode} />
-      <View style={{ alignItems: 'center', justifyContent: 'center', height: 170 }}>
-        <Reactor size={200} color={accent} />
+      <View style={{ flex: 1 }}>
+        <View style={styles.reactorBg} pointerEvents="none">
+          <Reactor size={260} color={accent} />
+        </View>
+        <FlatList
+          ref={listRef}
+          style={{ flex: 1, paddingHorizontal: 16 }}
+          data={messages}
+          keyExtractor={(m) => m.id}
+          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+          renderItem={({ item }) => (
+            <View style={[styles.bubble, item.role === 'user' ? styles.user : styles.jarvis]}>
+              <Text style={styles.bubbleText}>{item.text}</Text>
+            </View>
+          )}
+        />
       </View>
-      <FlatList
-        ref={listRef}
-        style={{ flex: 1, paddingHorizontal: 16 }}
-        data={messages}
-        keyExtractor={(m) => m.id}
-        onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
-        renderItem={({ item }) => (
-          <View style={[styles.bubble, item.role === 'user' ? styles.user : styles.jarvis]}>
-            <Text style={styles.bubbleText}>{item.text}</Text>
-          </View>
-        )}
-      />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.inputBar}>
           <TextInput style={styles.input} value={input} onChangeText={setInput} placeholder="Message Jarvis..." placeholderTextColor={TEXT_DIM} onSubmitEditing={send} returnKeyType="send" />
@@ -119,6 +121,7 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, on
 }
 
 const styles = StyleSheet.create({
+  reactorBg: { position: 'absolute', top: '50%', left: '50%', marginLeft: -130, marginTop: -130, opacity: 0.55, zIndex: 0 },
   bubble: { padding: 10, borderRadius: 14, marginVertical: 4, maxWidth: '80%' },
   bubbleText: { color: TEXT, fontSize: 15 },
   user: { alignSelf: 'flex-end', backgroundColor: 'rgba(60,232,201,0.15)' },

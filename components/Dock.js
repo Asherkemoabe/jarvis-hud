@@ -56,8 +56,8 @@ export default function Dock({ accent, onOpenCode }) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingBottom: 8 },
-  btn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: PANEL2, borderWidth: 1, borderColor: LINE, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7 },
-  icon: { fontSize: 14 },
-  label: { color: TEXT_DIM, fontSize: 10, letterSpacing: 1, fontWeight: '700' },
+  row: { flexDirection: 'row', gap: 6, paddingHorizontal: 16, paddingBottom: 6 },
+  btn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: PANEL2, borderWidth: 1, borderColor: LINE, borderRadius: 8, paddingHorizontal: 7, paddingVertical: 5 },
+  icon: { fontSize: 11 },
+  label: { color: TEXT_DIM, fontSize: 8, letterSpacing: 0.5, fontWeight: '700' },
 });
