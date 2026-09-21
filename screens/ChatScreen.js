@@ -93,7 +93,7 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, on
       <Dock accent={accent} onOpenCode={onOpenCode} />
       <View style={{ flex: 1 }}>
         <View style={styles.reactorBg} pointerEvents="none">
-          <Reactor size={260} color={accent} />
+          <Reactor size={200} color={accent} />
         </View>
         <FlatList
           ref={listRef}
@@ -101,6 +101,7 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, on
           data={messages}
           keyExtractor={(m) => m.id}
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+          ListHeaderComponent={<Text style={styles.bootLine}>BOOT SEQUENCE COMPLETE</Text>}
           renderItem={({ item }) => (
             <View style={[styles.bubble, item.role === 'user' ? styles.user : styles.jarvis]}>
               <Text style={styles.bubbleText}>{item.text}</Text>
@@ -109,10 +110,30 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, on
         />
       </View>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={styles.inputBar}>
-          <TextInput style={styles.input} value={input} onChangeText={setInput} placeholder="Message Jarvis..." placeholderTextColor={TEXT_DIM} onSubmitEditing={send} returnKeyType="send" />
-          <TouchableOpacity style={[styles.sendBtn, { backgroundColor: accent }]} onPress={send} disabled={sending}>
-            <Text style={{ color: '#04070a', fontWeight: 'bold' }}>{sending ? '…' : '➤'}</Text>
+        <View style={styles.inputWrap}>
+          <TouchableOpacity
+            style={styles.attachBtn}
+            onPress={() => Alert.alert('Coming soon', 'Attachments and tools are planned for a future update.')}
+          >
+            <Text style={styles.attachIcon}>✎</Text>
+          </TouchableOpacity>
+          <View style={styles.inputBar}>
+            <TextInput
+              style={styles.input}
+              value={input}
+              onChangeText={setInput}
+              placeholder="Message Jarvis..."
+              placeholderTextColor={TEXT_DIM}
+              multiline
+              maxLength={4000}
+            />
+          </View>
+          <TouchableOpacity
+            style={[styles.sendBtn, { backgroundColor: input.trim() ? accent : PANEL2 }]}
+            onPress={send}
+            disabled={sending || !input.trim()}
+          >
+            <Text style={{ color: input.trim() ? '#04070a' : TEXT_DIM, fontWeight: 'bold', fontSize: 16 }}>{sending ? '…' : '➤'}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -121,12 +142,16 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, on
 }
 
 const styles = StyleSheet.create({
-  reactorBg: { position: 'absolute', top: '50%', left: '50%', marginLeft: -130, marginTop: -130, opacity: 0.55, zIndex: 0 },
+  reactorBg: { position: 'absolute', top: '50%', left: '50%', marginLeft: -100, marginTop: -100, opacity: 0.2, zIndex: 0 },
+  bootLine: { color: TEXT_DIM, fontSize: 10, letterSpacing: 2, fontWeight: '700', textAlign: 'center', marginTop: 4, marginBottom: 10 },
   bubble: { padding: 10, borderRadius: 14, marginVertical: 4, maxWidth: '80%' },
   bubbleText: { color: TEXT, fontSize: 15 },
   user: { alignSelf: 'flex-end', backgroundColor: 'rgba(60,232,201,0.15)' },
   jarvis: { alignSelf: 'flex-start', backgroundColor: PANEL2 },
-  inputBar: { flexDirection: 'row', padding: 12, gap: 8, alignItems: 'center', borderTopWidth: 1, borderTopColor: LINE },
-  input: { flex: 1, backgroundColor: PANEL2, color: TEXT, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10 },
-  sendBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  inputWrap: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingTop: 6, paddingBottom: 10, gap: 8 },
+  attachBtn: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: PANEL2, borderWidth: 1, borderColor: LINE },
+  attachIcon: { color: TEXT_DIM, fontSize: 14 },
+  inputBar: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: PANEL2, borderRadius: 22, borderWidth: 1, borderColor: LINE, paddingHorizontal: 14, paddingVertical: 4 },
+  input: { flex: 1, color: TEXT, fontSize: 15, maxHeight: 100, paddingVertical: 8 },
+  sendBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
 });
