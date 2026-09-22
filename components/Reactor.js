@@ -98,6 +98,15 @@ export default function Reactor({ size = 200, color = '#3ce8c9', coilCount = 9 }
     <Line key={k} x1={p[0]} y1={p[1]} x2={triInner[k][0]} y2={triInner[k][1]} stroke={color} strokeWidth={0.5} opacity={0.6} />
   ));
 
+  // --- radial tick ring: short spokes facing the same way as the coils, not a dashed circle ---
+  const tickCount = 48;
+  const tickAngleStep = 360 / tickCount;
+  const ticks = Array.from({ length: tickCount }).map((_, i) => (
+    <G key={i} rotation={tickAngleStep * i} origin="100, 100">
+      <Line x1={100 + 52} y1={100} x2={100 + 63} y2={100} stroke={color} strokeWidth={1.8} opacity={0.85} />
+    </G>
+  ));
+
   return (
     <View style={{ width: size, height: size }}>
       {/* static: rim, coils, circuit traces */}
@@ -107,10 +116,10 @@ export default function Reactor({ size = 200, color = '#3ce8c9', coilCount = 9 }
         <G>{traces}</G>
       </Svg>
 
-      {/* rotating dashed containment ring (native-driver transform, cheap) */}
+      {/* rotating radial tick ring (native-driver transform, cheap) */}
       <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ rotate }] }]}>
         <Svg width={size} height={size} viewBox="0 0 200 200">
-          <Circle cx="100" cy="100" r="58" stroke={color} strokeWidth="2.5" strokeDasharray="5,4" fill="none" opacity={0.85} />
+          <G>{ticks}</G>
         </Svg>
       </Animated.View>
 
