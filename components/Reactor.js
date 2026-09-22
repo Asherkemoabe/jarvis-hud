@@ -103,7 +103,7 @@ export default function Reactor({ size = 200, color = '#3ce8c9', coilCount = 9 }
   const tickAngleStep = 360 / tickCount;
   const ticks = Array.from({ length: tickCount }).map((_, i) => (
     <G key={i} rotation={tickAngleStep * i} origin="100, 100">
-      <Line x1={100 + 88} y1={100} x2={100 + 93} y2={100} stroke={color} strokeWidth={1.8} opacity={0.85} />
+      <Line x1={100 + 41} y1={100} x2={100 + 52} y2={100} stroke={color} strokeWidth={1.8} opacity={0.85} />
     </G>
   ));
 
