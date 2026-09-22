@@ -110,7 +110,7 @@ export default function Reactor({ size = 200, color = '#3ce8c9', coilCount = 9 }
       {/* rotating dashed containment ring (native-driver transform, cheap) */}
       <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ rotate }] }]}>
         <Svg width={size} height={size} viewBox="0 0 200 200">
-          <Circle cx="100" cy="100" r="68" stroke={color} strokeWidth="2.5" strokeDasharray="2,6" fill="none" opacity={0.85} />
+          <Circle cx="100" cy="100" r="58" stroke={color} strokeWidth="2.5" strokeDasharray="5,4" fill="none" opacity={0.85} />
         </Svg>
       </Animated.View>
 
