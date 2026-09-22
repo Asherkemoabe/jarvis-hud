@@ -97,7 +97,7 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, on
         <Dock accent={accent} onOpenCode={onOpenCode} />
         <View style={{ flex: 1 }}>
           <View style={styles.reactorBg} pointerEvents="none">
-            <Reactor size={200} color={accent} />
+            <Reactor size={280} color={accent} />
           </View>
           <FlatList
             ref={listRef}
@@ -145,7 +145,7 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, on
 }
 
 const styles = StyleSheet.create({
-  reactorBg: { position: 'absolute', top: '50%', left: '50%', marginLeft: -100, marginTop: -100, opacity: 0.2, zIndex: 0 },
+  reactorBg: { position: 'absolute', top: '50%', left: '50%', marginLeft: -140, marginTop: -140, opacity: 0.2, zIndex: 0 },
   bootLine: { color: TEXT_DIM, fontSize: 10, letterSpacing: 2, fontWeight: '700', textAlign: 'center', marginTop: 4, marginBottom: 10 },
   bubble: { padding: 10, borderRadius: 14, marginVertical: 4, maxWidth: '80%' },
   bubbleText: { color: TEXT, fontSize: 15 },
