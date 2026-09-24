@@ -15,7 +15,8 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "CAMERA",
-        "ACTIVITY_RECOGNITION"
+        "ACTIVITY_RECOGNITION",
+        "QUERY_ALL_PACKAGES"
       ]
     },
     "plugins": [
