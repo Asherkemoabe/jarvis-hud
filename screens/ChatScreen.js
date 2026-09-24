@@ -1,35 +1,63 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import Reactor from '../components/Reactor';
 import Dock from '../components/Dock';
 import { ScreenWrap } from '../components/UI';
 import { PANEL2, TEXT, TEXT_DIM, LINE } from '../theme';
+import { launchAppByName } from '../utils/launcher';
 
-// Jarvis decides, per message, whether to just reply or also open one of
-// the app's feature screens. It always returns JSON: { reply, screen }.
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({ shouldShowAlert: true, shouldPlaySound: true, shouldSetBadge: false }),
+});
+
+// Jarvis decides, per message, whether to just reply, open a screen, launch
+// another app, or schedule a reminder. It always returns JSON:
+// { reply, screen, openApp, reminder }.
 // "screen" is one of the keys below, or null for plain conversation.
+// "openApp" is the spoken app name to launch directly (no tab), or null.
+// "reminder" is { title, isoDatetime } to schedule a real device
+// notification directly, or null.
 const SCREEN_KEYS = [
   'expenses', 'calendar', 'reminders', 'notes', 'weather', 'news', 'study',
   'translate', 'places', 'contacts', 'camera', 'files', 'fitness', 'device',
-  'vault', 'launcher', 'bridge', 'settings', 'code',
+  'vault', 'bridge', 'settings', 'code',
   'email', 'social', 'callscreen', 'smarthome', 'gaming',
 ];
 
-const SYSTEM_PROMPT = `You are JARVIS, a concise, dry-witted AI assistant. Address the user as "sir".
+function buildSystemPrompt() {
+  const now = new Date();
+  return `You are JARVIS, a concise, dry-witted AI assistant. Address the user as "sir".
+Current date/time (device local time): ${now.toString()} — use this to resolve relative times
+like "in 20 minutes", "tomorrow at 9am", or "tonight".
+
 This app has separate screens for specific tasks. When the user's message clearly asks for one of
 these, open it. Otherwise just chat normally.
 
-Screens: expenses (log/view spending in Pula), calendar (events), reminders (reminders/medication),
+Screens: expenses (log/view spending in Pula), calendar (events), reminders (VIEW/cancel already
+scheduled reminders only - do not use this to create one, see the reminder field below instead),
 notes (journaling), weather (weather/location), news (headlines), study (learn a topic),
 translate (translate text), places (nearby businesses), contacts (look up a contact),
 camera (take/pick a photo), files (pick a file), fitness (step count), device (battery/network),
-vault (save/retrieve a password), launcher (open another app), bridge (send WhatsApp/SMS),
+vault (save/retrieve a password), bridge (send WhatsApp/SMS),
 settings (change HUD color or API key), code (paste code to check or ask you to review it),
 email/social/callscreen/smarthome/gaming (not available yet
 in this build - open these anyway so the user sees why).
 
+If the user asks to open another app on their phone (e.g. "open Spotify", "launch WhatsApp"),
+do NOT use a screen for this. Instead set "openApp" to the app's name as the user said it, and
+leave "screen" null.
+
+If the user asks you to set a reminder, alarm-style note, or medication reminder with a reason
+and a time/date, do NOT use the reminders screen to create it. Instead set "reminder" to
+{"title": "<short reason>", "isoDatetime": "<ISO 8601 datetime, resolved from the current
+date/time above>"}, leave "screen" null, and confirm the time back to the user in your reply.
+If the user only wants to VIEW or cancel existing reminders, use the reminders screen instead
+and leave "reminder" null.
+
 Reply with ONLY a JSON object, no markdown fences, no extra text:
-{"reply": "<your short in-character reply>", "screen": "<one of: ${SCREEN_KEYS.join(', ')}, or null>"}`;
+{"reply": "<your short in-character reply>", "screen": "<one of: ${SCREEN_KEYS.join(', ')}, or null>", "openApp": "<app name or null>", "reminder": "<{title, isoDatetime} object or null>"}`;
+}
 
 const HISTORY_LIMIT = 10;
 
@@ -38,12 +66,37 @@ function safeParse(raw) {
     const cleaned = raw.replace(/^```json\s*/i, '').replace(/```$/, '').trim();
     const parsed = JSON.parse(cleaned);
     if (typeof parsed.reply === 'string') {
-      return { reply: parsed.reply, screen: SCREEN_KEYS.includes(parsed.screen) ? parsed.screen : null };
+      let reminder = null;
+      if (parsed.reminder && typeof parsed.reminder === 'object' && parsed.reminder.title && parsed.reminder.isoDatetime) {
+        const when = new Date(parsed.reminder.isoDatetime);
+        if (!isNaN(when.getTime()) && when.getTime() > Date.now()) {
+          reminder = { title: String(parsed.reminder.title), when };
+        }
+      }
+      return {
+        reply: parsed.reply,
+        screen: SCREEN_KEYS.includes(parsed.screen) ? parsed.screen : null,
+        openApp: typeof parsed.openApp === 'string' && parsed.openApp.trim() ? parsed.openApp.trim() : null,
+        reminder,
+      };
     }
   } catch (e) {
     // model didn't return valid JSON - fall back to treating it as plain text
   }
-  return { reply: raw, screen: null };
+  return { reply: raw, screen: null, openApp: null, reminder: null };
+}
+
+async function scheduleReminder(reminder) {
+  const perm = await Notifications.getPermissionsAsync();
+  if (perm.status !== 'granted') {
+    const req = await Notifications.requestPermissionsAsync();
+    if (req.status !== 'granted') return { ok: false, reason: 'Notification permission denied.' };
+  }
+  await Notifications.scheduleNotificationAsync({
+    content: { title: 'Jarvis reminder', body: reminder.title },
+    trigger: { date: reminder.when },
+  });
+  return { ok: true };
 }
 
 export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, onOpenCode }) {
@@ -71,14 +124,25 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, on
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
         body: JSON.stringify({
           model: 'openai/gpt-oss-20b',
-          messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...recent.map((m) => ({ role: m.role === 'jarvis' ? 'assistant' : 'user', content: m.text }))],
+          messages: [{ role: 'system', content: buildSystemPrompt() }, ...recent.map((m) => ({ role: m.role === 'jarvis' ? 'assistant' : 'user', content: m.text }))],
         }),
       });
       const data = await res.json();
-      const raw = data?.choices?.[0]?.message?.content?.trim() || data?.error?.message || '{"reply":"I had trouble forming a reply, sir.","screen":null}';
-      const { reply, screen } = safeParse(raw);
+      const raw = data?.choices?.[0]?.message?.content?.trim() || data?.error?.message || '{"reply":"I had trouble forming a reply, sir.","screen":null,"openApp":null,"reminder":null}';
+      const { reply, screen, openApp, reminder } = safeParse(raw);
       setMessages((p) => [...p, { id: Date.now() + '-j', role: 'jarvis', text: reply }]);
-      if (screen && onOpenScreen) {
+
+      if (openApp) {
+        const result = await launchAppByName(openApp);
+        if (!result.ok) {
+          setMessages((p) => [...p, { id: Date.now() + '-sys', role: 'jarvis', text: result.reason }]);
+        }
+      } else if (reminder) {
+        const result = await scheduleReminder(reminder);
+        if (!result.ok) {
+          setMessages((p) => [...p, { id: Date.now() + '-sys', role: 'jarvis', text: result.reason }]);
+        }
+      } else if (screen && onOpenScreen) {
         setTimeout(() => onOpenScreen(screen), 500);
       }
     } catch (e) {
