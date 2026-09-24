@@ -8,7 +8,6 @@ import NotesScreen from './screens/NotesScreen';
 import ExpensesScreen from './screens/ExpensesScreen';
 import VaultScreen from './screens/VaultScreen';
 import DeviceStatusScreen from './screens/DeviceStatusScreen';
-import AppLauncherScreen from './screens/AppLauncherScreen';
 import BridgeScreen from './screens/BridgeScreen';
 import CalendarScreen from './screens/CalendarScreen';
 import ContactsScreen from './screens/ContactsScreen';
@@ -99,7 +98,6 @@ export default function App() {
   if (screen === 'expenses') return <ExpensesScreen {...commonProps} />;
   if (screen === 'vault') return <VaultScreen {...commonProps} />;
   if (screen === 'device') return <DeviceStatusScreen {...commonProps} />;
-  if (screen === 'launcher') return <AppLauncherScreen {...commonProps} />;
   if (screen === 'bridge') return <BridgeScreen {...commonProps} />;
   if (screen === 'calendar') return <CalendarScreen {...commonProps} />;
   if (screen === 'contacts') return <ContactsScreen {...commonProps} />;
