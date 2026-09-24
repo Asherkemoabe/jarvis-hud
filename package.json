@@ -25,6 +25,7 @@
     "expo-secure-store": "*",
     "expo-notifications": "*",
     "expo-haptics": "*",
-    "react-native-rss-parser": "*"
+    "react-native-rss-parser": "*",
+    "react-native-launcher-kit": "*"
   }
 }
