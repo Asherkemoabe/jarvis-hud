@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import LauncherKit from 'react-native-launcher-kit';
+import { InstalledApps, RNLauncherKitHelper } from 'react-native-launcher-kit';
 
 // Opens ANY installed app by spoken name - no premade list, no tab.
 // Works for apps installed after the fact too, since we query the device
@@ -19,19 +19,19 @@ export async function launchAppByName(spokenName) {
     return { ok: false, reason: 'No app name given.' };
   }
   try {
-    const apps = await LauncherKit.getApps();
+    const apps = await InstalledApps.getApps({ includeVersion: false, includeAccentColor: false });
     const target = normalize(spokenName);
     // exact match first, then "contains", so "whatsapp" matches
     // "WhatsApp Messenger" too
-    let match = apps.find((a) => normalize(a.appName || a.label) === target);
+    let match = apps.find((a) => normalize(a.label) === target);
     if (!match) {
-      match = apps.find((a) => normalize(a.appName || a.label).includes(target));
+      match = apps.find((a) => normalize(a.label).includes(target));
     }
     if (!match) {
       return { ok: false, reason: `Couldn't find an app matching "${spokenName}" on this phone.` };
     }
-    await LauncherKit.launchApplication(match.packageName);
-    return { ok: true, appName: match.appName || match.label };
+    await RNLauncherKitHelper.launchApplication(match.packageName);
+    return { ok: true, appName: match.label };
   } catch (e) {
     return { ok: false, reason: `Couldn't open that app: ${e.message}` };
   }
