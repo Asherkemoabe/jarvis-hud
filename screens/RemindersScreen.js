@@ -1,36 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { ScreenWrap, PrimaryButton, Empty, Label, sharedInput } from '../components/UI';
-import { PANEL2, TEXT, TEXT_DIM, DANGER, LINE } from '../theme';
+import { ScreenWrap, Empty } from '../components/UI';
+import { PANEL2, TEXT, DANGER, LINE, TEXT_DIM } from '../theme';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({ shouldShowAlert: true, shouldPlaySound: true, shouldSetBadge: false }),
-});
-
-// Covers general reminders and medication reminders — both are just
-// "notify me at time X", which is a genuine local notification, no
-// Health Connect or cloud service required.
+// Creation now happens through Jarvis in chat ("remind me to take my
+// pills at 8pm") - it schedules the notification directly, no form here.
+// This screen is just for viewing/cancelling what's already scheduled.
 export default function RemindersScreen({ accent, onBack }) {
-  const [title, setTitle] = useState('');
-  const [minutesFromNow, setMinutesFromNow] = useState('30');
   const [scheduled, setScheduled] = useState([]);
 
   useEffect(() => {
-    Notifications.requestPermissionsAsync();
     Notifications.getAllScheduledNotificationsAsync().then(setScheduled);
   }, []);
-
-  const add = async () => {
-    if (!title.trim()) return;
-    const mins = parseInt(minutesFromNow, 10) || 30;
-    await Notifications.scheduleNotificationAsync({
-      content: { title: 'Jarvis reminder', body: title.trim() },
-      trigger: { seconds: mins * 60 },
-    });
-    setTitle('');
-    Notifications.getAllScheduledNotificationsAsync().then(setScheduled);
-  };
 
   const cancel = async (id) => {
     await Notifications.cancelScheduledNotificationAsync(id);
@@ -39,12 +21,7 @@ export default function RemindersScreen({ accent, onBack }) {
 
   return (
     <ScreenWrap title="Reminders" accent={accent} onBack={onBack} scroll={false}>
-      <View style={{ padding: 16 }}>
-        <Label>NEW REMINDER (e.g. medication, task)</Label>
-        <TextInput style={sharedInput} value={title} onChangeText={setTitle} placeholder="Take medication" placeholderTextColor={TEXT_DIM} />
-        <TextInput style={[sharedInput, { marginTop: 8 }]} value={minutesFromNow} onChangeText={setMinutesFromNow} placeholder="Minutes from now" placeholderTextColor={TEXT_DIM} keyboardType="numeric" />
-        <PrimaryButton label="Schedule reminder" accent={accent} onPress={add} />
-      </View>
+      <Text style={styles.hint}>Tell Jarvis in chat to set a new reminder - this screen is just for viewing or cancelling what's already scheduled.</Text>
       <FlatList
         style={{ flex: 1, paddingHorizontal: 16 }}
         data={scheduled}
@@ -62,6 +39,7 @@ export default function RemindersScreen({ accent, onBack }) {
 }
 
 const styles = StyleSheet.create({
+  hint: { color: TEXT_DIM, fontSize: 12, lineHeight: 17, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: PANEL2, borderRadius: 12, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: LINE },
   text: { color: TEXT, flex: 1, marginRight: 10 },
 });
