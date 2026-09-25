@@ -1,4 +1,6 @@
-import React, { useEffect, useRef } from 'react';\nimport { View, Animated, Easing, StyleSheet } from 'react-native';\nimport Svg, { Circle, G, Line, Rect, Path, Defs, RadialGradient, Stop } from 'react-native-svg';
+import React, { useEffect, useRef } from 'react';
+import { View, Animated, Easing, StyleSheet } from 'react-native';
+import Svg, { Circle, G, Line, Rect, Path, Defs, RadialGradient, Stop } from 'react-native-svg';
 
 function pt(r, deg) {
   const a = (deg * Math.PI) / 180;
