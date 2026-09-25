@@ -94,7 +94,7 @@ async function scheduleReminder(reminder) {
   }
   await Notifications.scheduleNotificationAsync({
     content: { title: 'Jarvis reminder', body: reminder.title },
-    trigger: { date: reminder.when },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: reminder.when },
   });
   return { ok: true };
 }
