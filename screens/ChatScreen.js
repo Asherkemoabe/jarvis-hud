@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import * as Speech from 'expo-speech';
 import Reactor from '../components/Reactor';
 import Dock from '../components/Dock';
 import { ScreenWrap } from '../components/UI';
@@ -99,11 +100,22 @@ async function scheduleReminder(reminder) {
   return { ok: true };
 }
 
+function speak(text, enabled) {
+  if (!enabled || !text) return;
+  Speech.stop();
+  Speech.speak(text, { rate: 0.95, pitch: 0.85, language: 'en-US' });
+}
+
 export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, onOpenCode }) {
   const [messages, setMessages] = useState([{ id: 'boot', role: 'jarvis', text: 'All systems online. How can I help, sir?' }]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [voiceOn, setVoiceOn] = useState(true);
   const listRef = useRef(null);
+
+  useEffect(() => {
+    return () => Speech.stop();
+  }, []);
 
   const send = async () => {
     const text = input.trim();
@@ -131,22 +143,27 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, on
       const raw = data?.choices?.[0]?.message?.content?.trim() || data?.error?.message || '{"reply":"I had trouble forming a reply, sir.","screen":null,"openApp":null,"reminder":null}';
       const { reply, screen, openApp, reminder } = safeParse(raw);
       setMessages((p) => [...p, { id: Date.now() + '-j', role: 'jarvis', text: reply }]);
+      speak(reply, voiceOn);
 
       if (openApp) {
         const result = await launchAppByName(openApp);
         if (!result.ok) {
           setMessages((p) => [...p, { id: Date.now() + '-sys', role: 'jarvis', text: result.reason }]);
+          speak(result.reason, voiceOn);
         }
       } else if (reminder) {
         const result = await scheduleReminder(reminder);
         if (!result.ok) {
           setMessages((p) => [...p, { id: Date.now() + '-sys', role: 'jarvis', text: result.reason }]);
+          speak(result.reason, voiceOn);
         }
       } else if (screen && onOpenScreen) {
         setTimeout(() => onOpenScreen(screen), 500);
       }
     } catch (e) {
-      setMessages((p) => [...p, { id: Date.now() + '-e', role: 'jarvis', text: 'Connection error: ' + e.message }]);
+      const errText = 'Connection error: ' + e.message;
+      setMessages((p) => [...p, { id: Date.now() + '-e', role: 'jarvis', text: errText }]);
+      speak(errText, voiceOn);
     } finally {
       setSending(false);
     }
@@ -178,6 +195,17 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, on
           />
         </View>
         <View style={styles.inputWrap}>
+          <TouchableOpacity
+            style={styles.attachBtn}
+            onPress={() => {
+              setVoiceOn((v) => {
+                if (v) Speech.stop();
+                return !v;
+              });
+            }}
+          >
+            <Text style={styles.attachIcon}>{voiceOn ? '🔊' : '🔇'}</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.attachBtn}
             onPress={() => Alert.alert('Coming soon', 'Attachments and tools are planned for a future update.')}
