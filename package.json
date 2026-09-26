@@ -27,6 +27,7 @@
     "expo-haptics": "*",
     "react-native-rss-parser": "*",
     "react-native-launcher-kit": "*",
-    "expo-speech": "*"
+    "expo-speech": "*",
+    "expo-android-sms-sender": "*"
   }
 }
