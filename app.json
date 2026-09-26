@@ -16,7 +16,8 @@
         "ACCESS_COARSE_LOCATION",
         "CAMERA",
         "ACTIVITY_RECOGNITION",
-        "QUERY_ALL_PACKAGES"
+        "QUERY_ALL_PACKAGES",
+        "SEND_SMS"
       ]
     },
     "plugins": [
