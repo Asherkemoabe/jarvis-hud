@@ -8,6 +8,7 @@ import { ScreenWrap } from '../components/UI';
 import { PANEL2, TEXT, TEXT_DIM, LINE } from '../theme';
 import { launchAppByName } from '../utils/launcher';
 import { sendSmsTo } from '../utils/sms';
+import { sendWhatsAppTo } from '../utils/whatsapp';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowAlert: true, shouldPlaySound: true, shouldSetBadge: false }),
@@ -41,7 +42,7 @@ scheduled reminders only - do not use this to create one, see the reminder field
 notes (journaling), weather (weather/location), news (headlines), study (learn a topic),
 translate (translate text), places (nearby businesses), contacts (look up a contact),
 camera (take/pick a photo), files (pick a file), fitness (step count), device (battery/network),
-vault (save/retrieve a password), bridge (send WhatsApp via the Termux bridge),
+vault (save/retrieve a password), bridge (manual WhatsApp/SMS form - only use if the whatsapp/sms fields below don't fit),
 settings (change HUD color or API key), code (paste code to check or ask you to review it),
 email/social/callscreen/smarthome/gaming (not available yet
 in this build - open these anyway so the user sees why).
@@ -57,14 +58,19 @@ date/time above>"}, leave "screen" null, and confirm the time back to the user i
 If the user only wants to VIEW or cancel existing reminders, use the reminders screen instead
 and leave "reminder" null.
 
-If the user asks you to text, message, or send an SMS to someone with a specific body, do NOT
-use the bridge screen for this - it is sent silently and directly. Instead set "sms" to
+If the user asks you to text, message, or send a plain SMS to someone with a specific body, do
+NOT use the bridge screen for this - it is sent silently and directly. Instead set "sms" to
 {"to": "<contact name as the user said it, or a raw phone number>", "body": "<the message text>"},
-leave "screen" null, and confirm in your reply. If the user wants WhatsApp specifically, use the
-bridge screen instead and leave "sms" null.
+leave "screen" null, and confirm in your reply.
+
+If the user specifically asks to send a WhatsApp message with a specific body, do NOT use the
+bridge screen either - set "whatsapp" to {"to": "<contact name or phone number>", "body": "<the
+message text>"} instead, leave "screen" and "sms" null, and confirm in your reply. This requires a
+local bridge server running on the phone; if it's not reachable your reply should reflect the
+error you get back.
 
 Reply with ONLY a JSON object, no markdown fences, no extra text:
-{"reply": "<your short in-character reply>", "screen": "<one of: ${SCREEN_KEYS.join(', ')}, or null>", "openApp": "<app name or null>", "reminder": "<{title, isoDatetime} object or null>", "sms": "<{to, body} object or null>"}`;
+{"reply": "<your short in-character reply>", "screen": "<one of: ${SCREEN_KEYS.join(', ')}, or null>", "openApp": "<app name or null>", "reminder": "<{title, isoDatetime} object or null>", "sms": "<{to, body} object or null>", "whatsapp": "<{to, body} object or null>"}`;
 }
 
 const HISTORY_LIMIT = 10;
@@ -85,18 +91,23 @@ function safeParse(raw) {
       if (parsed.sms && typeof parsed.sms === 'object' && parsed.sms.to && parsed.sms.body) {
         sms = { to: String(parsed.sms.to), body: String(parsed.sms.body) };
       }
+      let whatsapp = null;
+      if (parsed.whatsapp && typeof parsed.whatsapp === 'object' && parsed.whatsapp.to && parsed.whatsapp.body) {
+        whatsapp = { to: String(parsed.whatsapp.to), body: String(parsed.whatsapp.body) };
+      }
       return {
         reply: parsed.reply,
         screen: SCREEN_KEYS.includes(parsed.screen) ? parsed.screen : null,
         openApp: typeof parsed.openApp === 'string' && parsed.openApp.trim() ? parsed.openApp.trim() : null,
         reminder,
         sms,
+        whatsapp,
       };
     }
   } catch (e) {
     // model didn't return valid JSON - fall back to treating it as plain text
   }
-  return { reply: raw, screen: null, openApp: null, reminder: null, sms: null };
+  return { reply: raw, screen: null, openApp: null, reminder: null, sms: null, whatsapp: null };
 }
 
 async function scheduleReminder(reminder) {
@@ -152,8 +163,8 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, on
         }),
       });
       const data = await res.json();
-      const raw = data?.choices?.[0]?.message?.content?.trim() || data?.error?.message || '{"reply":"I had trouble forming a reply, sir.","screen":null,"openApp":null,"reminder":null,"sms":null}';
-      const { reply, screen, openApp, reminder, sms } = safeParse(raw);
+      const raw = data?.choices?.[0]?.message?.content?.trim() || data?.error?.message || '{"reply":"I had trouble forming a reply, sir.","screen":null,"openApp":null,"reminder":null,"sms":null,"whatsapp":null}';
+      const { reply, screen, openApp, reminder, sms, whatsapp } = safeParse(raw);
       setMessages((p) => [...p, { id: Date.now() + '-j', role: 'jarvis', text: reply }]);
       speak(reply, voiceOn);
 
@@ -171,6 +182,12 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, on
         }
       } else if (sms) {
         const result = await sendSmsTo(sms.to, sms.body);
+        if (!result.ok) {
+          setMessages((p) => [...p, { id: Date.now() + '-sys', role: 'jarvis', text: result.reason }]);
+          speak(result.reason, voiceOn);
+        }
+      } else if (whatsapp) {
+        const result = await sendWhatsAppTo(whatsapp.to, whatsapp.body);
         if (!result.ok) {
           setMessages((p) => [...p, { id: Date.now() + '-sys', role: 'jarvis', text: result.reason }]);
           speak(result.reason, voiceOn);
