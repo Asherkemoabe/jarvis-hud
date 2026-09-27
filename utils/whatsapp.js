@@ -1,0 +1,31 @@
+import { resolveNumber } from './contactLookup';
+
+// Sends a real WhatsApp message directly from chat, no separate screen -
+// but unlike SMS, there's no native Android API for this. It goes through
+// the Termux + Baileys bridge server (node index.js) that must already be
+// running on this same phone, listening on localhost:3000 - the same
+// server the Bridge screen's "Send via WhatsApp" button talks to.
+
+export async function sendWhatsAppTo(to, body) {
+  if (!to || !body) {
+    return { ok: false, reason: 'Missing a recipient or message text for WhatsApp.' };
+  }
+  const number = await resolveNumber(to);
+  if (!number) {
+    return { ok: false, reason: `Couldn't find a number for "${to}", sir.` };
+  }
+  try {
+    const res = await fetch('http://localhost:3000/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ number: number.replace(/\D/g, ''), message: body }),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      return { ok: false, reason: data.error || 'The WhatsApp bridge reported a failure.' };
+    }
+    return { ok: true, to: number };
+  } catch (e) {
+    return { ok: false, reason: 'Make sure the Termux + Baileys bridge server is running on this phone (node index.js).' };
+  }
+}
