@@ -1,25 +1,9 @@
 import { PermissionsAndroid, Platform } from 'react-native';
 import * as SmsSender from 'expo-android-sms-sender';
-import * as Contacts from 'expo-contacts';
+import { resolveNumber } from './contactLookup';
 
 // Sends a real SMS silently in the background - no Messages app popup,
-// no user tap needed. "to" can be a phone number OR a contact name
-// ("mom", "landlord") - we resolve names using the same expo-contacts
-// lookup the Contacts screen already uses.
-
-function looksLikePhoneNumber(s) {
-  return /^[+\d][\d\s\-()]{5,}$/.test(s.trim());
-}
-
-async function resolveNumber(to) {
-  if (looksLikePhoneNumber(to)) return to.trim();
-  const { status } = await Contacts.requestPermissionsAsync();
-  if (status !== 'granted') return null;
-  const { data } = await Contacts.getContactsAsync({ fields: [Contacts.Fields.PhoneNumbers] });
-  const target = to.trim().toLowerCase();
-  const match = data.find((c) => c.name && c.name.toLowerCase().includes(target) && c.phoneNumbers && c.phoneNumbers[0]);
-  return match ? match.phoneNumbers[0].number : null;
-}
+// no user tap needed. "to" can be a phone number OR a contact name.
 
 export async function sendSmsTo(to, body) {
   if (Platform.OS !== 'android') {
