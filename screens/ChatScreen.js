@@ -7,6 +7,7 @@ import Dock from '../components/Dock';
 import { ScreenWrap } from '../components/UI';
 import { PANEL2, TEXT, TEXT_DIM, LINE } from '../theme';
 import { launchAppByName } from '../utils/launcher';
+import { sendSmsTo } from '../utils/sms';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowAlert: true, shouldPlaySound: true, shouldSetBadge: false }),
@@ -40,7 +41,7 @@ scheduled reminders only - do not use this to create one, see the reminder field
 notes (journaling), weather (weather/location), news (headlines), study (learn a topic),
 translate (translate text), places (nearby businesses), contacts (look up a contact),
 camera (take/pick a photo), files (pick a file), fitness (step count), device (battery/network),
-vault (save/retrieve a password), bridge (send WhatsApp/SMS),
+vault (save/retrieve a password), bridge (send WhatsApp via the Termux bridge),
 settings (change HUD color or API key), code (paste code to check or ask you to review it),
 email/social/callscreen/smarthome/gaming (not available yet
 in this build - open these anyway so the user sees why).
@@ -56,8 +57,14 @@ date/time above>"}, leave "screen" null, and confirm the time back to the user i
 If the user only wants to VIEW or cancel existing reminders, use the reminders screen instead
 and leave "reminder" null.
 
+If the user asks you to text, message, or send an SMS to someone with a specific body, do NOT
+use the bridge screen for this - it is sent silently and directly. Instead set "sms" to
+{"to": "<contact name as the user said it, or a raw phone number>", "body": "<the message text>"},
+leave "screen" null, and confirm in your reply. If the user wants WhatsApp specifically, use the
+bridge screen instead and leave "sms" null.
+
 Reply with ONLY a JSON object, no markdown fences, no extra text:
-{"reply": "<your short in-character reply>", "screen": "<one of: ${SCREEN_KEYS.join(', ')}, or null>", "openApp": "<app name or null>", "reminder": "<{title, isoDatetime} object or null>"}`;
+{"reply": "<your short in-character reply>", "screen": "<one of: ${SCREEN_KEYS.join(', ')}, or null>", "openApp": "<app name or null>", "reminder": "<{title, isoDatetime} object or null>", "sms": "<{to, body} object or null>"}`;
 }
 
 const HISTORY_LIMIT = 10;
@@ -74,17 +81,22 @@ function safeParse(raw) {
           reminder = { title: String(parsed.reminder.title), when };
         }
       }
+      let sms = null;
+      if (parsed.sms && typeof parsed.sms === 'object' && parsed.sms.to && parsed.sms.body) {
+        sms = { to: String(parsed.sms.to), body: String(parsed.sms.body) };
+      }
       return {
         reply: parsed.reply,
         screen: SCREEN_KEYS.includes(parsed.screen) ? parsed.screen : null,
         openApp: typeof parsed.openApp === 'string' && parsed.openApp.trim() ? parsed.openApp.trim() : null,
         reminder,
+        sms,
       };
     }
   } catch (e) {
     // model didn't return valid JSON - fall back to treating it as plain text
   }
-  return { reply: raw, screen: null, openApp: null, reminder: null };
+  return { reply: raw, screen: null, openApp: null, reminder: null, sms: null };
 }
 
 async function scheduleReminder(reminder) {
@@ -140,8 +152,8 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, on
         }),
       });
       const data = await res.json();
-      const raw = data?.choices?.[0]?.message?.content?.trim() || data?.error?.message || '{"reply":"I had trouble forming a reply, sir.","screen":null,"openApp":null,"reminder":null}';
-      const { reply, screen, openApp, reminder } = safeParse(raw);
+      const raw = data?.choices?.[0]?.message?.content?.trim() || data?.error?.message || '{"reply":"I had trouble forming a reply, sir.","screen":null,"openApp":null,"reminder":null,"sms":null}';
+      const { reply, screen, openApp, reminder, sms } = safeParse(raw);
       setMessages((p) => [...p, { id: Date.now() + '-j', role: 'jarvis', text: reply }]);
       speak(reply, voiceOn);
 
@@ -153,6 +165,12 @@ export default function ChatScreen({ accent, apiKey, onNeedKey, onOpenScreen, on
         }
       } else if (reminder) {
         const result = await scheduleReminder(reminder);
+        if (!result.ok) {
+          setMessages((p) => [...p, { id: Date.now() + '-sys', role: 'jarvis', text: result.reason }]);
+          speak(result.reason, voiceOn);
+        }
+      } else if (sms) {
+        const result = await sendSmsTo(sms.to, sms.body);
         if (!result.ok) {
           setMessages((p) => [...p, { id: Date.now() + '-sys', role: 'jarvis', text: result.reason }]);
           speak(result.reason, voiceOn);
