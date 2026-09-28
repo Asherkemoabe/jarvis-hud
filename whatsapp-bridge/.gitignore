@@ -1,0 +1,3 @@
+# WhatsApp session credentials - never commit these
+auth_info_baileys/
+node_modules/
