@@ -27,7 +27,7 @@ export async function sendWhatsAppTo(to, body) {
     return { ok: false, reason: `Couldn't find a number for "${to}", sir.` };
   }
   try {
-    const res = await fetch('http://localhost:3000/send', {
+    const res = await fetch('http://127.0.0.1:3000/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ number: normalizeForWhatsApp(number), message: body }),
@@ -38,6 +38,6 @@ export async function sendWhatsAppTo(to, body) {
     }
     return { ok: true, to: number };
   } catch (e) {
-    return { ok: false, reason: 'Make sure the Termux + Baileys bridge server is running on this phone (node index.js).' };
+    return { ok: false, reason: `Couldn't reach the WhatsApp bridge (${e.message}). Make sure it is running in Termux (node index.js).` };
   }
 }
