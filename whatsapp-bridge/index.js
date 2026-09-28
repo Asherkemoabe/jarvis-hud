@@ -14,6 +14,7 @@ const { Boom } = require('@hapi/boom');
 
 let sock;
 let ready = false;
+let pairingRequested = false;
 
 async function startSock() {
   const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
@@ -21,12 +22,29 @@ async function startSock() {
 
   sock.ev.on('creds.update', saveCreds);
 
-  sock.ev.on('connection.update', (update) => {
+  sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
-      console.log('\nScan this with WhatsApp > Settings > Linked Devices > Link a device:\n');
-      qrcode.generate(qr, { small: true });
+      // Single-phone setup: you can't scan a QR shown on the same phone, so if
+      // WA_NUMBER is set (country code + number, digits only, e.g. 267XXXXXXXX)
+      // we request a pairing code instead. Enter it in WhatsApp > Settings >
+      // Linked Devices > Link a device > Link with phone number instead.
+      if (process.env.WA_NUMBER) {
+        if (!pairingRequested) {
+          pairingRequested = true;
+          try {
+            const code = await sock.requestPairingCode(process.env.WA_NUMBER);
+            console.log('\nPairing code: ' + code + '\nEnter it in WhatsApp > Linked Devices > Link with phone number instead.\n');
+          } catch (e) {
+            pairingRequested = false;
+            console.log('Could not get a pairing code: ' + e.message);
+          }
+        }
+      } else {
+        console.log('\nScan this with another device (or set WA_NUMBER to use a pairing code instead):\n');
+        qrcode.generate(qr, { small: true });
+      }
     }
 
     if (connection === 'open') {
@@ -41,7 +59,7 @@ async function startSock() {
         : null;
       const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
       console.log('Connection closed.', shouldReconnect ? 'Reconnecting...' : 'Logged out - delete the auth_info_baileys folder to re-link.');
-      if (shouldReconnect) startSock();
+      if (shouldReconnect) { pairingRequested = false; startSock(); }
     }
   });
 }
