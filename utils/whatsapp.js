@@ -1,5 +1,17 @@
 import { resolveNumber } from './contactLookup';
 
+// The bridge needs the full international number. Contacts saved in local
+// Botswana format (8 digits, e.g. "77 123 456") get the 267 prefix added.
+function normalizeForWhatsApp(raw) {
+  const hasPlus = raw.trim().startsWith('+');
+  const digits = raw.replace(/\D/g, '');
+  if (hasPlus) return digits;
+  if (digits.startsWith('00')) return digits.slice(2);
+  if (digits.startsWith('267') && digits.length >= 11) return digits;
+  if (digits.length <= 8) return '267' + digits.replace(/^0+/, '');
+  return digits;
+}
+
 // Sends a real WhatsApp message directly from chat, no separate screen -
 // but unlike SMS, there's no native Android API for this. It goes through
 // the Termux + Baileys bridge server (node index.js) that must already be
@@ -18,7 +30,7 @@ export async function sendWhatsAppTo(to, body) {
     const res = await fetch('http://localhost:3000/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ number: number.replace(/\D/g, ''), message: body }),
+      body: JSON.stringify({ number: normalizeForWhatsApp(number), message: body }),
     });
     const data = await res.json();
     if (!data.ok) {
